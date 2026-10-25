@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arnos Dev - Rede Social para Programadores</title>
+  <style>
+    /* RESET & BASE */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0d1117; color: #c9d1d9; line-height: 1.5; }
+
+    /* HEADER */
+    header {
+      background-color: #161b22; border-bottom: 1px solid #30363d; padding: 12px 20px;
+      display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100;
+    }
+    .logo-brand { font-size: 20px; font-weight: bold; color: #58a6ff; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    nav { display: flex; align-items: center; gap: 12px; }
+
+    /* INPUTS & BUTTONS */
+    input[type="text"], input[type="password"], input[type="number"], textarea {
+      width: 100%; padding: 10px; background-color: #0d1117; border: 1px solid #30363d; border-radius: 6px; font-size: 14px; color: #c9d1d9; margin-bottom: 10px;
+    }
+    input:focus, textarea:focus { outline: none; border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,0.3); }
+    
+    button {
+      background-color: #21262d; border: 1px solid #30363d; border-radius: 6px; padding: 6px 14px;
+      font-size: 13px; font-weight: bold; color: #c9d1d9; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+    }
+    button:hover { background-color: #30363d; }
+    button.btn-blue { background-color: #238636; border-color: #2ea043; color: #ffffff; }
+    button.btn-blue:hover { background-color: #2ea043; }
+    button.btn-red { background-color: #da3633; border-color: #f85149; color: #ffffff; }
+
+    /* AVATAR */
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%; object-fit: cover;
+      background-color: #30363d; display: flex; align-items: center; justify-content: center;
+      color: #ffffff; font-weight: bold; font-size: 14px; flex-shrink: 0; border: 1px solid #484f58;
+    }
+    .avatar.lg { width: 72px; height: 72px; font-size: 26px; }
+
+    /* LAYOUT & CARDS */
+    .container { max-width: 750px; margin: 20px auto; padding: 0 15px; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    
+    .auth-card { max-width: 380px; margin: 60px auto; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 24px; }
+    .error-box { color: #f85149; font-size: 13px; margin-bottom: 10px; }
+
+    /* TABS */
+    .tabs { display: flex; border-bottom: 2px solid #30363d; margin-bottom: 15px; }
+    .tab-btn { background: none; border: none; padding: 10px 18px; font-weight: bold; color: #8b949e; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab-btn.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+
+    /* MEDIA & BADGES */
+    .post-img, .prod-img { width: 100%; max-height: 380px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; }
+    .code-snippet { background-color: #0d1117; border: 1px solid #30363d; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 13px; color: #7ee787; margin-bottom: 10px; white-space: pre-wrap; }
+    .credits-badge { background-color: rgba(35,134,54,0.15); color: #3fb950; padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; border: 1px solid rgba(35,134,54,0.4); }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header id="main-header" class="hidden">
+    <div class="logo-brand" onclick="switchView('feed')">💻 Arnos Dev</div>
+    <nav>
+      <button onclick="switchView('feed')">Feed Dev</button>
+      <button onclick="switchView('marketplace')">Marketplace Dev</button>
+      <span class="credits-badge">⚡ <span id="header-credits">0.00</span></span>
+      <button onclick="switchView('profile')">Meu Perfil</button>
+      <button class="btn-red" onclick="logout()">Sair</button>
+    </nav>
+  </header>
+
+  <div class="container">
+
+    <!-- TELA DE AUTENTICAÇÃO (LOGIN / REGISTO ARNOS DEV) -->
+    <div id="view-auth" class="auth-card">
+      <h2 id="auth-title" style="text-align: center; margin-bottom: 15px; color: #58a6ff;">Entrar - Arnos Dev</h2>
+      <div id="auth-error" class="error-box hidden"></div>
+
+      <div id="form-signup" class="hidden">
+        <label style="font-size: 12px; font-weight: bold; color: #8b949e;">Utilizador Dev</label>
+        <input type="text" id="su-user" placeholder="Ex: dev_master">
+        <label style="font-size: 12px; font-weight: bold; color: #8b949e;">Palavra-passe</label>
+        <input type="password" id="su-pass" placeholder="Palavra-passe">
+        <button class="btn-blue" style="width: 100%; justify-content: center;" onclick="handleSignup()">Criar Conta Dev</button>
+        <p style="text-align: center; font-size: 13px; margin-top: 15px;">
+          Já tens conta? <a href="#" onclick="toggleAuthMode('login')" style="color: #58a6ff;">Entrar</a>
+        </p>
+      </div>
+
+      <div id="form-login">
+        <label style="font-size: 12px; font-weight: bold; color: #8b949e;">Utilizador Dev</label>
+        <input type="text" id="li-user" placeholder="Seu utilizador">
+        <label style="font-size: 12px; font-weight: bold; color: #8b949e;">Palavra-passe</label>
+        <input type="password" id="li-pass" placeholder="Sua palavra-passe">
+        <button class="btn-blue" style="width: 100%; justify-content: center;" onclick="handleLogin()">Entrar na Rede</button>
+        <p style="text-align: center; font-size: 13px; margin-top: 15px;">
+          Não tens conta? <a href="#" onclick="toggleAuthMode('signup')" style="color: #58a6ff;">Criar uma</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- FEED VIEW -->
+    <div id="view-feed" class="hidden">
+      <div class="card">
+        <h3>Publicar Código ou Ideia</h3>
+        <textarea id="post-text" rows="3" placeholder="O que estás a programar hoje? (Dica: Podes colar snippets ou ideias)"></textarea>
+        <label style="font-size: 12px; font-weight: bold; color: #8b949e; display: block; margin-top: 5px;">Print / Imagem (Opcional)</label>
+        <input type="file" id="post-file" accept="image/*" style="margin-bottom: 8px;">
+        <div id="post-preview"></div>
+        <button class="btn-blue" onclick="createPost()">Publicar no Feed Dev</button>
+      </div>
+      <div id="feed-container"></div>
+    </div>
+
+    <!-- MARKETPLACE VIEW -->
+    <div id="view-marketplace" class="hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2>Marketplace de Recursos Dev</h2>
+        <button class="btn-blue" onclick="openProductModal()">+ Anunciar Projeto/API</button>
+      </div>
+      <div id="marketplace-container"></div>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div id="view-profile" class="hidden">
+      <div class="card">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <div id="profile-avatar-box"></div>
+          <div>
+            <h2 id="profile-username-txt" style="color: #58a6ff;"></h2>
+            <p style="color: #3fb950; font-weight: bold; margin-top: 4px;">⚡ Créditos Acumulados: <span id="profile-credits-txt">0.00</span></p>
+          </div>
+        </div>
+
+        <div style="margin-top: 15px; border-top: 1px solid #30363d; padding-top: 12px;">
+          <label style="font-size: 12px; font-weight: bold; color: #8b949e; display: block; margin-bottom: 4px;">Alterar Avatar Dev</label>
+          <input type="file" id="profile-avatar-file" accept="image/*" style="margin-bottom: 6px;">
+          <button class="btn-blue" onclick="updateProfileAvatar()">Guardar Novo Avatar</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button id="tab-my-posts" class="tab-btn active" onclick="switchProfileTab('posts')">Meus Posts Dev</button>
+        <button id="tab-my-products" class="tab-btn" onclick="switchProfileTab('products')">Minha Vitrine Dev</button>
+      </div>
+
+      <div id="profile-posts-list"></div>
+      <div id="profile-products-list" class="hidden"></div>
+    </div>
+
+  </div>
+
+  <!-- MODAL CRIAR PRODUTO DEV -->
+  <div id="modal-product" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:200;">
+    <div style="background:#161b22; border:1px solid #30363d; width:90%; max-width:450px; padding:20px; border-radius:8px; color:#c9d1d9;">
+      <h3 style="color:#58a6ff; margin-bottom:10px;">Anunciar Recurso / Projeto</h3>
+      <label style="font-size: 12px; font-weight: bold; color: #8b949e;">Nome do Software / API / Template</label>
+      <input type="text" id="prod-name" placeholder="Ex: Boilerplate React / API Node">
+      <label style="font-size: 12px; font-weight: bold; color: #8b949e;">Preço (€ / R$)</label>
+      <input type="number" id="prod-price" step="0.01" placeholder="0.00">
+      <label style="font-size: 12px; font-weight: bold; color: #8b949e;">Descrição Técnica</label>
+      <textarea id="prod-desc" rows="3" placeholder="Tech stack, documentação..."></textarea>
+      <label style="font-size: 12px; font-weight: bold; color: #8b949e;">Screenshot / Logo</label>
+      <input type="file" id="prod-file" accept="image/*" style="margin-bottom: 8px;">
+      <div id="prod-preview"></div>
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button class="btn-blue" onclick="saveProduct()">Publicar Anúncio</button>
+        <button onclick="closeProductModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE SCRIPTS -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Espaço isolado específico para o ARNOS DEV
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'arnos-dev-standalone';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' 
+      ? JSON.parse(__firebase_config) 
+      : {
+          apiKey: "AIzaSyCxFcZGxHBILooE1U_UsySdzPU_lCyt2Bw",
+          authDomain: "sitefjrebase.firebaseapp.com",
+          projectId: "sitefjrebase",
+          storageBucket: "sitefjrebase.firebasestorage.app",
+          messagingSenderId: "667261334607",
+          appId: "1:667261334607:web:dec574c7521bb0f885a63a"
+        };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let authUser = null;
+    let currentUserData = null;
+    let usersMap = {};
+    let postsList = [];
+    let productsList = [];
+
+    let tempPostImg = null;
+    let tempProdImg = null;
+    let tempAvatarImg = null;
+
+    const colUsers = () => collection(db, 'artifacts', appId, 'public', 'data', 'users');
+    const docUser = (uname) => doc(db, 'artifacts', appId, 'public', 'data', 'users', uname.toLowerCase());
+    const colPosts = () => collection(db, 'artifacts', appId, 'public', 'data', 'posts');
+    const docPost = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'posts', id);
+    const colProds = () => collection(db, 'artifacts', appId, 'public', 'data', 'products');
+    const docProd = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'products', id);
+
+    async function init() {
+      try { await signInAnonymously(auth); } catch(e){}
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      authUser = user;
+      if (!user) return;
+      const saved = localStorage.getItem('arnos_dev_standalone_user');
+      if (saved) {
+        const snap = await getDoc(docUser(saved));
+        if (snap.exists()) {
+          currentUserData = snap.data();
+          enterApp();
+          return;
+        }
+      }
+      showAuth();
+    });
+
+    function setupRealtimeListeners() {
+      onSnapshot(colUsers(), (snap) => {
+        usersMap = {};
+        snap.forEach(d => usersMap[d.data().username.toLowerCase()] = d.data());
+        if (currentUserData && usersMap[currentUserData.username.toLowerCase()]) {
+          currentUserData = usersMap[currentUserData.username.toLowerCase()];
+          updateCreditsUI();
+        }
+        refreshViews();
+      });
+
+      onSnapshot(colPosts(), (snap) => {
+        postsList = [];
+        snap.forEach(d => postsList.push({ id: d.id, ...d.data() }));
+        postsList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        refreshViews();
+      });
+
+      onSnapshot(colProds(), (snap) => {
+        productsList = [];
+        snap.forEach(d => productsList.push({ id: d.id, ...d.data() }));
+        productsList.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        refreshViews();
+      });
+    }
+
+    function updateCreditsUI() {
+      if (!currentUserData) return;
+      const val = currentUserData.credits || 0;
+      document.getElementById('header-credits').innerText = val.toFixed(2);
+      const prof = document.getElementById('profile-credits-txt');
+      if (prof) prof.innerText = val.toFixed(2);
+    }
+
+    function renderAvatar(uObj, sizeClass = '') {
+      const name = uObj ? uObj.username : 'U';
+      const initial = name.charAt(0).toUpperCase();
+      if (uObj && uObj.avatarUrl) {
+        return `<img src="${escapeHtml(uObj.avatarUrl)}" class="avatar ${sizeClass}">`;
+      }
+      return `<div class="avatar ${sizeClass}">${initial}</div>`;
+    }
+
+    // AUTH CONTROLS
+    window.toggleAuthMode = function(mode) {
+      document.getElementById('auth-error').classList.add('hidden');
+      document.getElementById('auth-title').innerText = mode === 'login' ? "Entrar - Arnos Dev" : "Criar Conta - Arnos Dev";
+      document.getElementById('form-signup').classList.toggle('hidden', mode === 'login');
+      document.getElementById('form-login').classList.toggle('hidden', mode !== 'login');
+    };
+
+    window.handleSignup = async function() {
+      const user = document.getElementById('su-user').value.trim();
+      const pass = document.getElementById('su-pass').value;
+      if (!user || !pass) return showErr("Preencha todos os campos.");
+
+      const snap = await getDoc(docUser(user));
+      if (snap.exists()) return showErr("Esse utilizador dev já existe.");
+
+      const newObj = { username: user, password: pass, credits: 0, avatarUrl: '' };
+      await setDoc(docUser(user), newObj);
+      currentUserData = newObj;
+      localStorage.setItem('arnos_dev_standalone_user', user);
+      enterApp();
+    };
+
+    window.handleLogin = async function() {
+      const user = document.getElementById('li-user').value.trim();
+      const pass = document.getElementById('li-pass').value;
+      if (!user || !pass) return showErr("Preencha todos os campos.");
+
+      const snap = await getDoc(docUser(user));
+      if (!snap.exists() || snap.data().password !== pass) return showErr("Credenciais incorretas.");
+      
+      currentUserData = snap.data();
+      if (currentUserData.credits === undefined) currentUserData.credits = 0;
+      localStorage.setItem('arnos_dev_standalone_user', user);
+      enterApp();
+    };
+
+    window.logout = function() {
+      localStorage.removeItem('arnos_dev_standalone_user');
+      currentUserData = null;
+      showAuth();
+    };
+
+    function showErr(msg) {
+      const box = document.getElementById('auth-error');
+      box.innerText = msg; box.classList.remove('hidden');
+    }
+
+    function showAuth() {
+      document.getElementById('main-header').classList.add('hidden');
+      document.getElementById('view-auth').classList.remove('hidden');
+      document.getElementById('view-feed').classList.add('hidden');
+      document.getElementById('view-marketplace').classList.add('hidden');
+      document.getElementById('view-profile').classList.add('hidden');
+    }
+
+    function enterApp() {
+      document.getElementById('main-header').classList.remove('hidden');
+      document.getElementById('view-auth').classList.add('hidden');
+      setupRealtimeListeners();
+      switchView('feed');
+    }
+
+    // VIEWS NAVIGATION
+    window.switchView = function(view) {
+      document.getElementById('view-feed').classList.add('hidden');
+      document.getElementById('view-marketplace').classList.add('hidden');
+      document.getElementById('view-profile').classList.add('hidden');
+
+      if (view === 'feed') {
+        document.getElementById('view-feed').classList.remove('hidden');
+        renderFeed();
+      } else if (view === 'marketplace') {
+        document.getElementById('view-marketplace').classList.remove('hidden');
+        renderMarketplace();
+      } else if (view === 'profile') {
+        document.getElementById('view-profile').classList.remove('hidden');
+        renderProfile();
+      }
+    };
+
+    // POSTS DEV
+    document.getElementById('post-file').addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (f) {
+        const r = new FileReader();
+        r.onload = (evt) => {
+          tempPostImg = evt.target.result;
+          document.getElementById('post-preview').innerHTML = `<img src="${tempPostImg}" style="max-height:120px; border-radius:4px;">`;
+        };
+        r.readAsDataURL(f);
+      }
+    });
+
+    window.createPost = async function() {
+      const text = document.getElementById('post-text').value.trim();
+      if (!text && !tempPostImg) return alert("Escreva um texto ou adicione uma imagem.");
+
+      await addDoc(colPosts(), {
+        author: currentUserData.username,
+        content: text,
+        imageUrl: tempPostImg || '',
+        timestamp: new Date().toISOString(),
+        likes: []
+      });
+
+      document.getElementById('post-text').value = '';
+      tempPostImg = null;
+      document.getElementById('post-file').value = '';
+      document.getElementById('post-preview').innerHTML = '';
+    };
+
+    window.deletePost = async function(id) {
+      if (confirm("Apagar post?")) await deleteDoc(docPost(id));
+    };
+
+    window.toggleLikePost = async function(id) {
+      const p = postsList.find(x => x.id === id);
+      if (!p) return;
+      let likes = p.likes ? [...p.likes] : [];
+      const me = currentUserData.username;
+      const hasLiked = likes.includes(me);
+
+      if (hasLiked) likes = likes.filter(u => u !== me);
+      else likes.push(me);
+
+      await updateDoc(docPost(id), { likes });
+
+      // O criador ganha/perde 0.01 créditos por curtida
+      if (p.author.toLowerCase() !== me.toLowerCase()) {
+        const authorSnap = await getDoc(docUser(p.author));
+        if (authorSnap.exists()) {
+          const curC = authorSnap.data().credits || 0;
+          const nextC = hasLiked ? Math.max(0, curC - 0.01) : curC + 0.01;
+          await updateDoc(docUser(p.author), { credits: Number(nextC.toFixed(2)) });
+        }
+      }
+    };
+
+    // MARKETPLACE DEV
+    document.getElementById('prod-file').addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (f) {
+        const r = new FileReader();
+        r.onload = (evt) => {
+          tempProdImg = evt.target.result;
+          document.getElementById('prod-preview').innerHTML = `<img src="${tempProdImg}" style="max-height:100px; border-radius:4px;">`;
+        };
+        r.readAsDataURL(f);
+      }
+    });
+
+    window.openProductModal = function() {
+      document.getElementById('prod-name').value = '';
+      document.getElementById('prod-price').value = '';
+      document.getElementById('prod-desc').value = '';
+      document.getElementById('prod-file').value = '';
+      document.getElementById('prod-preview').innerHTML = '';
+      tempProdImg = null;
+      document.getElementById('modal-product').classList.remove('hidden');
+    };
+
+    window.closeProductModal = function() { document.getElementById('modal-product').classList.add('hidden'); };
+
+    window.saveProduct = async function() {
+      const name = document.getElementById('prod-name').value.trim();
+      const price = parseFloat(document.getElementById('prod-price').value);
+      const desc = document.getElementById('prod-desc').value.trim();
+      if (!name || isNaN(price)) return alert("Preencha o nome e o preço.");
+
+      await addDoc(colProds(), {
+        seller: currentUserData.username,
+        name, price, description: desc,
+        imageUrl: tempProdImg || '',
+        timestamp: new Date().toISOString(),
+        likes: []
+      });
+      closeProductModal();
+    };
+
+    window.deleteProduct = async function(id) {
+      if (confirm("Apagar anúncio?")) await deleteDoc(docProd(id));
+    };
+
+    window.toggleLikeProduct = async function(id) {
+      const prod = productsList.find(x => x.id === id);
+      if (!prod) return;
+      let likes = prod.likes ? [...prod.likes] : [];
+      const me = currentUserData.username;
+      const hasLiked = likes.includes(me);
+
+      if (hasLiked) likes = likes.filter(u => u !== me);
+      else likes.push(me);
+
+      await updateDoc(docProd(id), { likes });
+
+      // O vendedor ganha/perde 0.01 créditos por curtida
+      if (prod.seller.toLowerCase() !== me.toLowerCase()) {
+        const sellerSnap = await getDoc(docUser(prod.seller));
+        if (sellerSnap.exists()) {
+          const curC = sellerSnap.data().credits || 0;
+          const nextC = hasLiked ? Math.max(0, curC - 0.01) : curC + 0.01;
+          await updateDoc(docUser(prod.seller), { credits: Number(nextC.toFixed(2)) });
+        }
+      }
+    };
+
+    // AVATAR PERFIL
+    document.getElementById('profile-avatar-file').addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (f) {
+        const r = new FileReader();
+        r.onload = (evt) => { tempAvatarImg = evt.target.result; };
+        r.readAsDataURL(f);
+      }
+    });
+
+    window.updateProfileAvatar = async function() {
+      if (!tempAvatarImg) return alert("Selecione uma imagem.");
+      await updateDoc(docUser(currentUserData.username), { avatarUrl: tempAvatarImg });
+      currentUserData.avatarUrl = tempAvatarImg;
+      tempAvatarImg = null;
+      document.getElementById('profile-avatar-file').value = '';
+      alert("Avatar atualizado com sucesso!");
+      renderProfile();
+    };
+
+    // RENDERS
+    function buildPostCard(p) {
+      const authorObj = usersMap[p.author.toLowerCase()];
+      const isMe = p.author.toLowerCase() === currentUserData.username.toLowerCase();
+      const likes = p.likes || [];
+      const hasLiked = likes.includes(currentUserData.username);
+
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${renderAvatar(authorObj)}
+            <strong style="color:#58a6ff;">${escapeHtml(p.author)}</strong>
+          </div>
+          <div>
+            <span style="font-size:12px; color:#8b949e;">${new Date(p.timestamp).toLocaleString()}</span>
+            ${isMe ? `<button class="btn-red" style="padding:2px 6px; font-size:11px; margin-left:6px;" onclick="deletePost('${p.id}')">Apagar</button>` : ''}
+          </div>
+        </div>
+        ${p.content ? `<div class="code-snippet">${escapeHtml(p.content)}</div>` : ''}
+        ${p.imageUrl ? `<img src="${escapeHtml(p.imageUrl)}" class="post-img">` : ''}
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="${hasLiked ? 'btn-blue' : ''}" onclick="toggleLikePost('${p.id}')">
+            ${hasLiked ? '❤️ Curtido' : '♡ Curtir'}
+          </button>
+          <span style="font-size:13px; color:#8b949e;"><strong>${likes.length}</strong> curtidas</span>
+        </div>
+      `;
+      return div;
+    }
+
+    function buildProductCard(prod) {
+      const sellerObj = usersMap[prod.seller.toLowerCase()];
+      const isMe = prod.seller.toLowerCase() === currentUserData.username.toLowerCase();
+      const likes = prod.likes || [];
+      const hasLiked = likes.includes(currentUserData.username);
+
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            ${renderAvatar(sellerObj)}
+            <strong style="color:#58a6ff;">Dev: ${escapeHtml(prod.seller)}</strong>
+          </div>
+          <div>
+            <span style="font-size:12px; color:#8b949e;">${new Date(prod.timestamp).toLocaleDateString()}</span>
+            ${isMe ? `<button class="btn-red" style="padding:2px 6px; font-size:11px; margin-left:6px;" onclick="deleteProduct('${prod.id}')">Apagar</button>` : ''}
+          </div>
+        </div>
+        ${prod.imageUrl ? `<img src="${escapeHtml(prod.imageUrl)}" class="prod-img">` : ''}
+        <h3 style="color:#c9d1d9;">${escapeHtml(prod.name)}</h3>
+        <p style="font-size:16px; font-weight:bold; color:#3fb950; margin:4px 0;">€ / R$ ${prod.price.toFixed(2)}</p>
+        <p style="margin-bottom:10px; color:#8b949e;">${escapeHtml(prod.description)}</p>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="${hasLiked ? 'btn-blue' : ''}" onclick="toggleLikeProduct('${prod.id}')">
+            ${hasLiked ? '❤️ Curtido' : '♡ Curtir'}
+          </button>
+          <span style="font-size:13px; color:#8b949e;"><strong>${likes.length}</strong> curtidas</span>
+        </div>
+      `;
+      return div;
+    }
+
+    function renderFeed() {
+      const c = document.getElementById('feed-container');
+      c.innerHTML = postsList.length === 0 ? '<p style="color:#8b949e;">Nenhum post no feed dev.</p>' : '';
+      postsList.forEach(p => c.appendChild(buildPostCard(p)));
+    }
+
+    function renderMarketplace() {
+      const c = document.getElementById('marketplace-container');
+      c.innerHTML = productsList.length === 0 ? '<p style="color:#8b949e;">Nenhum recurso anunciado.</p>' : '';
+      productsList.forEach(prod => c.appendChild(buildProductCard(prod)));
+    }
+
+    window.switchProfileTab = function(tab) {
+      document.getElementById('profile-posts-list').classList.toggle('hidden', tab !== 'posts');
+      document.getElementById('profile-products-list').classList.toggle('hidden', tab !== 'products');
+      document.getElementById('tab-my-posts').classList.toggle('active', tab === 'posts');
+      document.getElementById('tab-my-products').classList.toggle('active', tab === 'products');
+    };
+
+    function renderProfile() {
+      if (!currentUserData) return;
+      document.getElementById('profile-username-txt').innerText = currentUserData.username;
+      document.getElementById('profile-avatar-box').innerHTML = renderAvatar(currentUserData, 'lg');
+      document.getElementById('profile-credits-txt').innerText = (currentUserData.credits || 0).toFixed(2);
+
+      const myPosts = postsList.filter(p => p.author.toLowerCase() === currentUserData.username.toLowerCase());
+      const pList = document.getElementById('profile-posts-list');
+      pList.innerHTML = myPosts.length === 0 ? '<p style="color:#8b949e;">Ainda não publicaste nada.</p>' : '';
+      myPosts.forEach(p => pList.appendChild(buildPostCard(p)));
+
+      const myProds = productsList.filter(prod => prod.seller.toLowerCase() === currentUserData.username.toLowerCase());
+      const prodList = document.getElementById('profile-products-list');
+      prodList.innerHTML = myProds.length === 0 ? '<p style="color:#8b949e;">Ainda não anunciaste projetos.</p>' : '';
+      myProds.forEach(prod => prodList.appendChild(buildProductCard(prod)));
+    }
+
+    function refreshViews() {
+      const fView = document.getElementById('view-feed');
+      const mView = document.getElementById('view-marketplace');
+      const pView = document.getElementById('view-profile');
+
+      if (!fView.classList.contains('hidden')) renderFeed();
+      if (!mView.classList.contains('hidden')) renderMarketplace();
+      if (!pView.classList.contains('hidden')) renderProfile();
+    }
+
+    function escapeHtml(str) { return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
